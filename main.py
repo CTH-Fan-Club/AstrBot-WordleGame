@@ -1,6 +1,18 @@
 import sys
 import os
 sys.path.insert(0, os.path.dirname(__file__))
+import subprocess
+
+def ensure_playwright():
+    try:
+        import playwright
+    except ImportError:
+        print("⚠️ 未找到 Playwright，正在自动安装...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "playwright"])
+        subprocess.check_call([sys.executable, "-m", "playwright", "install", "chromium"])
+
+ensure_playwright()
+
 from astrbot.api.event import filter, AstrMessageEvent, MessageEventResult
 from astrbot.api.star import Context, Star, register
 from astrbot.api import logger

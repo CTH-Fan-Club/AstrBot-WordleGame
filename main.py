@@ -22,3 +22,18 @@ class MyPlugin(Star):
 
     async def terminate(self):
         """可选择实现异步的插件销毁方法，当插件被卸载/停用时会调用。"""
+    
+    def run(self, ame: AstrMessageEvent):
+        if ame.message_str == "helloworld":
+            return True, tuple([True, "Hello World!!", "helloworld"])
+        else:
+            return False, None
+        
+    def info(self):
+        return {
+            "name": "helloworld",
+            "desc": "测试插件",
+            "help": "测试插件, 回复 helloworld 即可触发",
+            "version": "v1.2",
+            "author": "Soulter"
+        }

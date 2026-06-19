@@ -70,7 +70,7 @@ class MyPlugin(Star):
                     return
 
                 # ...
-                new_wordle.submit_guess(self,idiom)
+                new_wordle.submit_guess(idiom)
                 message_result = event.make_result()
                 message_result.chain = [Comp.Plain("先见之明")] # import astrbot.api.message_components as Comp
                 await event.send(message_result) # 发送回复，不能使用 yield

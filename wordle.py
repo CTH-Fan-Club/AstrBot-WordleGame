@@ -32,7 +32,7 @@ class WordleGameAsync:
         
         await asyncio.sleep(1.5)
         # 注意：这里换成了相对路径，图片会保存在你运行机器人的当前目录下
-        await self.page.screenshot(path="guess0.png")
+        await self.page.screenshot(path="guess0.jpg")
 
         try:
             content = await self.page.content()

@@ -72,7 +72,7 @@ class MyPlugin(Star):
                 # ...
                 await new_wordle.submit_guess(idiom)
                 message_result = event.make_result()
-                message_result.chain = [Comp.Plain("先见之明")] # import astrbot.api.message_components as Comp
+                message_result.chain = [Comp.Image.fromFileSystem("guess0.jpg")] # import astrbot.api.message_components as Comp
                 await event.send(message_result) # 发送回复，不能使用 yield
 
                 controller.keep(timeout=60, reset_timeout=True) # 重置超时时间为 60s，如果不重置，则会继续之前的超时时间计时。

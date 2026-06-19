@@ -40,7 +40,6 @@ class MyPlugin(Star):
         message_str = event.message_str # 用户发的纯文本消息字符串
         message_chain = event.get_messages() # 用户所发的消息的消息链 # from astrbot.api.message_components import *
         logger.info(message_chain)
-        new_wordle=WordleGame();
-        new_wordle.__init__();
-        new_wordle.start_game();
+        new_wordle=WordleGameAsync();
+        await new_wordle.start_game();
         yield event.plain_result(f"开始Wordle, {user_name}, 你发了 {message_str}!") # 发送一条纯文本消息

@@ -1,6 +1,7 @@
 import asyncio
 from playwright.async_api import async_playwright
 
+# 注意这里的类名叫 WordleGameAsync，必须和 main.py 里的导入一致
 class WordleGameAsync:
     def __init__(self):
         self.playwright = None
@@ -11,6 +12,7 @@ class WordleGameAsync:
     async def start_game(self):
         print("正在启动游戏，请稍候...")
         self.playwright = await async_playwright().start()
+        # headless=False 会显示浏览器界面
         self.browser = await self.playwright.chromium.launch(headless=False) 
         self.page = await self.browser.new_page()
         await self.page.goto("https://www.wordle.name/")
@@ -28,9 +30,9 @@ class WordleGameAsync:
         await self.page.keyboard.type(word)
         await self.page.keyboard.press("Enter")
         
-        # 异步的 sleep
         await asyncio.sleep(1.5)
-        await self.page.screenshot(path=r"C:\Users\Administrator\Desktop\guess0.png")
+        # 注意：这里换成了相对路径，图片会保存在你运行机器人的当前目录下
+        await self.page.screenshot(path="guess0.png")
 
         try:
             content = await self.page.content()
@@ -52,5 +54,3 @@ class WordleGameAsync:
         if self.playwright:
             await self.playwright.stop()
         print("游戏已关闭。")
-
-# ================= 异步调用示例 =================

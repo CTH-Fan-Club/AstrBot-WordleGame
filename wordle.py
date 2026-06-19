@@ -54,16 +54,3 @@ class WordleGameAsync:
         print("游戏已关闭。")
 
 # ================= 异步调用示例 =================
-async def main():
-    game = WordleGameAsync()
-    await game.start_game()
-    
-    try:
-        await game.submit_guess("AUDIO")
-        await game.submit_guess("PLANT")
-        await asyncio.sleep(5) 
-    finally:
-        await game.close_game()
-
-if __name__ == "__main__":
-    asyncio.run(main())

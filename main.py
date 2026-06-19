@@ -34,7 +34,7 @@ class MyPlugin(Star):
         yield event.plain_result(f"Hello, {user_name}, 你发了 {message_str}!") # 发送一条纯文本消息
 
     @filter.command("wordle")
-    def wordle(self, event: AstrMessageEvent):
+    async def wordle(self, event: AstrMessageEvent):
         """这是一个 wordle 指令""" # 这是 handler 的描述，将会被解析方便用户了解插件内容。建议填写。
         user_name = event.get_sender_name()
         message_str = event.message_str # 用户发的纯文本消息字符串

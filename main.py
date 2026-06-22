@@ -3,6 +3,14 @@ import os
 sys.path.insert(0, os.path.dirname(__file__))
 import subprocess
 
+print("⚠️ 正在尝试强制安装 Playwright 系统依赖...")
+try:
+    # 强制当前环境的 playwright 安装底层系统依赖
+    subprocess.check_call([sys.executable, "-m", "playwright", "install-deps", "chromium"])
+    print("✅ 系统依赖强制安装完成！")
+except Exception as e:
+    print(f"❌ 系统依赖安装失败，请查看上方报错: {e}")
+
 def ensure_playwright():
     try:
         import playwright

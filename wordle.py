@@ -12,8 +12,8 @@ class WordleGameAsync:
     async def start_game(self):
         print("正在启动游戏，请稍候...")
         self.playwright = await async_playwright().start()
-        # headless=False 会显示浏览器界面
-        self.browser = await self.playwright.chromium.launch(headless=False) 
+        # 【修改这里】将 headless=False 改为 True，让浏览器在后台静默运行
+        self.browser = await self.playwright.chromium.launch(headless=True) 
         self.page = await self.browser.new_page()
         await self.page.goto("https://www.wordle.name/")
         await self.page.wait_for_load_state("networkidle")

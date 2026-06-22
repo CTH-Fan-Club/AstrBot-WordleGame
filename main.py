@@ -10,6 +10,8 @@ def ensure_playwright():
         print("⚠️ 未找到 Playwright，正在自动安装...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "playwright"])
         subprocess.check_call([sys.executable, "-m", "playwright", "install", "chromium"])
+        # 【新增下面这一行】，自动安装系统环境依赖
+        subprocess.check_call([sys.executable, "-m", "playwright", "install-deps", "chromium"])
 
 ensure_playwright()
 import astrbot.api.message_components as Comp

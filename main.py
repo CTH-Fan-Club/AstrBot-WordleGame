@@ -47,6 +47,7 @@ class MyPlugin(Star):
                 idiom = event.message_str # 用户发来的成语，假设是 "一马当先"
 
                 if idiom == "退出":   # 假设用户想主动退出成语接龙，输入了 "退出"
+                    await new_wordle.close_game()
                     await event.send(event.plain_result("已退出wordle~"))
                     controller.stop()    # 停止会话控制器，会立即结束。
                     return
@@ -55,7 +56,7 @@ class MyPlugin(Star):
                     return
 
                 # ...
-                await new_wordle.submit_guess(idiom)
+                await new_wordle.submit(idiom)
                 message_result = event.make_result()
                 message_result.chain = [Comp.Image.fromFileSystem("guess0.jpg")] # import astrbot.api.message_components as Comp
                 await event.send(message_result) # 发送回复，不能使用 yield

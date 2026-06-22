@@ -3,7 +3,6 @@ import os
 sys.path.insert(0, os.path.dirname(__file__))
 import subprocess
 
-ensure_playwright()
 import astrbot.api.message_components as Comp
 from astrbot.core.utils.session_waiter import (
     session_waiter,

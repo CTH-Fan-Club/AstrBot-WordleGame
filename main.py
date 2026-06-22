@@ -18,89 +18,84 @@ class MyPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
 
-    # 注册指令的装饰器。指令名为 helloworld。注册成功后，发送 `/helloworld` 就会触发这个指令，并回复 `你好, {user_name}!`
-    #@filter.command("helloworld")
-    #async def helloworld(self, event: AstrMessageEvent):
-
-    #@filter.command("wordle")
-    #async def wordle(self, event: AstrMessageEvent):
-    #   """这是一个 wordle 指令""" # 这是 handler 的描述，将会被解析方便用户了解插件内容。建议填写。
-    #    user_name = event.get_sender_name()
-    #    message_str = event.message_str # 用户发的纯文本消息字符串
-    #    message_chain = event.get_messages() # 用户所发的消息的消息链 # from astrbot.api.message_components import *
-    #    logger.info(message_chain)
-    #    new_wordle=WordleGameAsync();
-    #    await new_wordle.start_game();
-    #    yield event.plain_result(f"开始Wordle, {user_name}, 你发了 {message_str}!") # 发送一条纯文本消息
-
     @filter.command("wordle")
     async def handle_empty_mention(self, event: AstrMessageEvent, length: int = 5):
         """wordle指令"""
         try:
-            new_wordle=WordleGameAsync();
-            await new_wordle.start_game(length);
+            new_wordle = WordleGameAsync()
+            await new_wordle.start_game(length)
             yield event.plain_result(f"请发送一个长度为{length}的英文单词~\n你有10分钟的时间")
 
-            # 具体的会话控制器使用方法
-            @session_waiter(timeout=600, record_history_chains=False) # 注册一个会话控制器，设置超时时间为 60 秒，不记录历史消息链
+            # 注册一个会话控制器，设置超时时间为 10 分钟
+            @session_waiter(timeout=600, record_history_chains=False) 
             async def empty_mention_waiter(controller: SessionController, event: AstrMessageEvent):
-                idiom = event.message_str # 用户发来的成语，假设是 "一马当先"
+                # 转换为纯小写并去除两端空格，防止因大小写导致校验失败
+                idiom = event.message_str.strip().lower() 
 
-                if idiom == "退出":   # 假设用户想主动退出成语接龙，输入了 "退出"
+                if idiom == "退出":   
                     await new_wordle.close_game()
                     await event.send(event.plain_result("已退出wordle~"))
-                    controller.stop()    # 停止会话控制器，会立即结束。
+                    controller.stop()    # 停止会话控制器
                     return
 
+                # 校验是否全是纯英文字母
                 flag = True
                 for i in idiom:
-                    if (i <'a' or i > 'z'):
+                    if i < 'a' or i > 'z':
                         flag = False
 
-                if len(idiom) != length or flag == False :
+                # 如果长度不对或者包含非字母，直接拦截并要求重新输入
+                if len(idiom) != length or not flag:
+                    await event.send(event.plain_result(f"输入不合法！请输入一个长度为 {length} 的纯英文单词。"))
+                    controller.keep(timeout=600, reset_timeout=True) # 保持会话
                     return
 
-                # ...
                 fg = await new_wordle.submit(idiom)
+                
                 if fg == 0:
-                    yield event.plain_result("没有这个单词呀")
+                    # 【核心修复】改为使用 await event.send 发送，不再使用 yield
+                    await event.send(event.plain_result("词典中没有这个单词呀，不算次数，请重新输入~"))
+                    controller.keep(timeout=600, reset_timeout=True) # 单词不存在，继续等待输入
                     return
+                    
                 elif fg == 1:
                     await new_wordle.close_game()
                     user_name = event.get_sender_name()
                     await event.send(event.plain_result(f"🎉 恭喜{user_name}，答案完全正确！"))
+                    
                     message_result = event.make_result()
-                    message_result.chain = [Comp.Image.fromFileSystem("guess0.jpg")] # import astrbot.api.message_components as Comp
+                    message_result.chain = [Comp.Image.fromFileSystem("guess0.jpg")] 
                     await event.send(message_result)
-                    controller.stop()    # 停止会话控制器，会立即结束。
+                    controller.stop()    # 答对了，结束游戏
                     return
+                    
                 elif fg == 2:
                     await new_wordle.close_game()
-                    await event.send(event.plain_result("非常遗憾，没有人猜出正确答案>_<"))
+                    # 游戏失败时，顺便把正确答案展示出来，体验更好
+                    await event.send(event.plain_result(f"非常遗憾，次数已用光！正确答案是: {new_wordle.target_word}"))
+                    
                     message_result = event.make_result()
-                    message_result.chain = [Comp.Image.fromFileSystem("guess0.jpg")] # import astrbot.api.message_components as Comp
+                    message_result.chain = [Comp.Image.fromFileSystem("guess0.jpg")] 
                     await event.send(message_result)
-                    controller.stop()    # 停止会话控制器，会立即结束。
+                    controller.stop()    # 输了，结束游戏
                     return
                 
+                # fg == 3: 单词存在但没猜中，发送当前进度的图片
                 message_result = event.make_result()
-                message_result.chain = [Comp.Image.fromFileSystem("guess0.jpg")] # import astrbot.api.message_components as Comp
-                await event.send(message_result) # 发送回复，不能使用 yield
+                message_result.chain = [Comp.Image.fromFileSystem("guess0.jpg")] 
+                await event.send(message_result) 
 
-                #controller.keep(timeout=600, reset_timeout=True) # 重置超时时间为 60s，如果不重置，则会继续之前的超时时间计时。
-
-                # controller.stop() # 停止会话控制器，会立即结束。
-                # 如果记录了历史消息链，可以通过 controller.get_history_chains() 获取历史消息链
+                # 【核心新增】关键：只要游戏还没输/没赢，就必须重置时间，继续等待下一个单词
+                #controller.keep(timeout=600, reset_timeout=True) 
 
             try:
                 await empty_mention_waiter(event)
-            except TimeoutError as _: # 当超时后，会话控制器会抛出 TimeoutError
+            except TimeoutError as _: 
                 await new_wordle.close_game()
-                yield event.plain_result("非常遗憾，没有人猜出正确答案>_<")
+                yield event.plain_result("时间到，非常遗憾，没有人猜出正确答案>_<")
             except Exception as e:
                 yield event.plain_result("发生错误，请联系管理员: " + str(e))
             finally:
                 event.stop_event()
         except Exception as e:
             logger.error("handle_empty_mention error: " + str(e))
-        

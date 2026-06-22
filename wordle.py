@@ -24,6 +24,8 @@ class WordleGameAsync:
         """游戏开始，指定单词长度 (2-11)"""
         # 限制长度在 2 到 11 之间
         self.length = max(2, min(11, length))
+        if(length > 5):
+            self.max_attempts = self.max_attempts + length - 5
         self.guesses = []
         self.is_active = True
 
@@ -144,19 +146,19 @@ class WordleGameAsync:
         """提交单词，检查并在当前目录生成图片"""
         if not self.is_active:
             print("游戏未在进行中。")
-            return False
+            return 0
 
         word = word.upper()
         if len(word) != self.length:
             print(f"长度错误！请输入一个长度为 {self.length} 的单词。")
-            return False
+            return 0
 
         print(f"正在联网核对词典: {word}...")
         # 联网验证单词是否合法
         is_valid = await self._check_word_online(word)
         if not is_valid:
             print(f"提交失败：词典中不存在单词 '{word}'！")
-            return False
+            return 0
 
         # 计算颜色判定并保存记录
         colors = self._evaluate_guess(word)
@@ -169,11 +171,13 @@ class WordleGameAsync:
         if word == self.target_word:
             print("🎉 恭喜你，答案完全正确！")
             self.is_active = False
+            return 1
         elif len(self.guesses) >= self.max_attempts:
             print(f"游戏结束！正确的单词是: {self.target_word}")
             self.is_active = False
+            return 2
 
-        return True
+        return 3
 
     async def close_game(self):
         """清理数据并结束游戏"""

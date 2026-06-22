@@ -61,8 +61,19 @@ class MyPlugin(Star):
                     return
 
                 # ...
-                flag = await new_wordle.submit(idiom)
-                if flag == False:
+                fg = await new_wordle.submit(idiom)
+                if fg == 0:
+                    return
+                elif fg == 1:
+                    await new_wordle.close_game()
+                    user_name = event.get_sender_name()
+                    await event.send(event.plain_result(f"🎉 恭喜{user_name}，答案完全正确！"))
+                    controller.stop()    # 停止会话控制器，会立即结束。
+                    return
+                elif fg == 2:
+                    await new_wordle.close_game()
+                    await event.send(event.plain_result("非常遗憾，没有人猜出正确答案>_<"))
+                    controller.stop()    # 停止会话控制器，会立即结束。
                     return
                 
                 message_result = event.make_result()
@@ -78,7 +89,7 @@ class MyPlugin(Star):
                 await empty_mention_waiter(event)
             except TimeoutError as _: # 当超时后，会话控制器会抛出 TimeoutError
                 await new_wordle.close_game()
-                yield event.plain_result("你超时了！")
+                yield event.plain_result("非常遗憾，没有人猜出正确答案>_<")
             except Exception as e:
                 yield event.plain_result("发生错误，请联系管理员: " + str(e))
             finally:

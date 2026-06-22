@@ -14,6 +14,14 @@ class WordleGameAsync:
         self.playwright = await async_playwright().start()
         self.browser = await self.playwright.chromium.launch(headless=True) 
         self.page = await self.browser.new_page()
+
+        async def block_fonts(route):
+            if route.request.resource_type == "font":
+                await route.abort() # 遇到下载字体的请求，直接切断
+            else:
+                await route.continue_() # 其他请求（如网页、图片）正常放行
+                
+        await self.page.route("**/*", block_fonts)
         
         # ====== 修改这里的代码 ======
         print("正在打开网页，可能需要稍等...")

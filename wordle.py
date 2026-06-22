@@ -12,11 +12,23 @@ class WordleGameAsync:
     async def start_game(self):
         print("正在启动游戏，请稍候...")
         self.playwright = await async_playwright().start()
-        # 【修改这里】将 headless=False 改为 True，让浏览器在后台静默运行
         self.browser = await self.playwright.chromium.launch(headless=True) 
         self.page = await self.browser.new_page()
-        await self.page.goto("https://www.wordle.name/")
-        await self.page.wait_for_load_state("networkidle")
+        
+        # ====== 修改这里的代码 ======
+        print("正在打开网页，可能需要稍等...")
+        try:
+            # timeout=60000: 将超时时间延长到 60 秒
+            # wait_until="domcontentloaded": 只要网页的基本骨架加载完就继续，不等图片和外部广告
+            await self.page.goto("https://www.wordle.name/", timeout=60000, wait_until="domcontentloaded")
+            
+            # 注释或删掉原来的 networkidle 等待，因为海外网站很难达到完全的网络静默
+            # await self.page.wait_for_load_state("networkidle")
+            
+        except Exception as e:
+            print(f"网页加载可能不完全，但我们将继续尝试: {e}")
+        # ============================
+            
         print("游戏已成功开始！可以输入答案了。")
 
     async def submit_guess(self, word: str):

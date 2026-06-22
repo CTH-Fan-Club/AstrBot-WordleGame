@@ -3,24 +3,6 @@ import os
 sys.path.insert(0, os.path.dirname(__file__))
 import subprocess
 
-print("⚠️ 正在尝试强制安装 Playwright 系统依赖...")
-try:
-    # 强制当前环境的 playwright 安装底层系统依赖
-    subprocess.check_call([sys.executable, "-m", "playwright", "install-deps", "chromium"])
-    print("✅ 系统依赖强制安装完成！")
-except Exception as e:
-    print(f"❌ 系统依赖安装失败，请查看上方报错: {e}")
-
-def ensure_playwright():
-    try:
-        import playwright
-    except ImportError:
-        print("⚠️ 未找到 Playwright，正在自动安装...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "playwright"])
-        subprocess.check_call([sys.executable, "-m", "playwright", "install", "chromium"])
-        # 【新增下面这一行】，自动安装系统环境依赖
-        subprocess.check_call([sys.executable, "-m", "playwright", "install-deps", "chromium"])
-
 ensure_playwright()
 import astrbot.api.message_components as Comp
 from astrbot.core.utils.session_waiter import (
@@ -38,34 +20,9 @@ class MyPlugin(Star):
         super().__init__(context)
 
     # 注册指令的装饰器。指令名为 helloworld。注册成功后，发送 `/helloworld` 就会触发这个指令，并回复 `你好, {user_name}!`
-    @filter.command("helloworld")
-    async def helloworld(self, event: AstrMessageEvent):
-        """用于强制安装系统依赖并查看日志"""
-        import subprocess
-        import sys
-        
-        # 先回复一条消息，防止等待太久以为机器人死机了
-        yield event.plain_result("正在尝试为您在当前真实环境中安装系统依赖，这可能需要几十秒到一分钟，请稍候...")
-        
-        try:
-            # 强行在 AstrBot 的 Python 环境中运行安装命令，并捕获所有输出
-            result = subprocess.run(
-                [sys.executable, "-m", "playwright", "install-deps", "chromium"], 
-                capture_output=True, 
-                text=True
-            )
-            
-            # 提取安装日志
-            log = f"=== 标准输出 ===\n{result.stdout}\n=== 错误输出 ===\n{result.stderr}"
-            
-            # QQ 消息有长度限制，如果日志太长，截取最后 1500 个字符
-            if len(log) > 1500:
-                log = log[-1500:] 
-                
-            yield event.plain_result(f"安装执行完毕，日志如下:\n{log}")
-            
-        except Exception as e:
-            yield event.plain_result(f"执行过程中发生严重错误: {str(e)}")
+    #@filter.command("helloworld")
+    #async def helloworld(self, event: AstrMessageEvent):
+
     #@filter.command("wordle")
     #async def wordle(self, event: AstrMessageEvent):
     #   """这是一个 wordle 指令""" # 这是 handler 的描述，将会被解析方便用户了解插件内容。建议填写。

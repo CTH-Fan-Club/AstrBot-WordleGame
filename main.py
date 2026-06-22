@@ -40,13 +40,32 @@ class MyPlugin(Star):
     # 注册指令的装饰器。指令名为 helloworld。注册成功后，发送 `/helloworld` 就会触发这个指令，并回复 `你好, {user_name}!`
     @filter.command("helloworld")
     async def helloworld(self, event: AstrMessageEvent):
-        """这是一个 hello world 指令""" # 这是 handler 的描述，将会被解析方便用户了解插件内容。建议填写。
-        user_name = event.get_sender_name()
-        message_str = event.message_str # 用户发的纯文本消息字符串
-        message_chain = event.get_messages() # 用户所发的消息的消息链 # from astrbot.api.message_components import *
-        logger.info(message_chain)
-        yield event.plain_result(f"Hello, {user_name}, 你发了 {message_str}!") # 发送一条纯文本消息
-
+        """用于强制安装系统依赖并查看日志"""
+        import subprocess
+        import sys
+        
+        # 先回复一条消息，防止等待太久以为机器人死机了
+        yield event.plain_result("正在尝试为您在当前真实环境中安装系统依赖，这可能需要几十秒到一分钟，请稍候...")
+        
+        try:
+            # 强行在 AstrBot 的 Python 环境中运行安装命令，并捕获所有输出
+            result = subprocess.run(
+                [sys.executable, "-m", "playwright", "install-deps", "chromium"], 
+                capture_output=True, 
+                text=True
+            )
+            
+            # 提取安装日志
+            log = f"=== 标准输出 ===\n{result.stdout}\n=== 错误输出 ===\n{result.stderr}"
+            
+            # QQ 消息有长度限制，如果日志太长，截取最后 1500 个字符
+            if len(log) > 1500:
+                log = log[-1500:] 
+                
+            yield event.plain_result(f"安装执行完毕，日志如下:\n{log}")
+            
+        except Exception as e:
+            yield event.plain_result(f"执行过程中发生严重错误: {str(e)}")
     #@filter.command("wordle")
     #async def wordle(self, event: AstrMessageEvent):
     #   """这是一个 wordle 指令""" # 这是 handler 的描述，将会被解析方便用户了解插件内容。建议填写。

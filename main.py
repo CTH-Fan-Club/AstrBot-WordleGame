@@ -52,7 +52,7 @@ class MyPlugin(Star):
                     controller.stop()    # 停止会话控制器，会立即结束。
                     return
 
-                flag = true
+                flag = True
                 for i in idiom:
                     if (i <'a' or i > 'z'):
                         flag = False

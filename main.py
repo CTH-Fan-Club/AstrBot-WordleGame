@@ -55,14 +55,14 @@ class MyPlugin(Star):
                 flag = true
                 for i in idiom:
                     if (i <'a' or i > 'z'):
-                        flag = false
+                        flag = False
 
-                if len(idiom) != length or flag == false :
+                if len(idiom) != length or flag == False :
                     return
 
                 # ...
                 flag = await new_wordle.submit(idiom)
-                if flag == false:
+                if flag == False:
                     return
                 
                 message_result = event.make_result()

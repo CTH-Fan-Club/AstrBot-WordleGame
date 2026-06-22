@@ -51,17 +51,20 @@ class WordleGameAsync:
         # print(f"【作弊代码】目标单词是: {self.target_word}") 
 
     async def _check_word_online(self, word: str) -> bool:
-        """联网查词典检查单词是否存在"""
+        """使用 Datamuse API 检查单词是否存在（支持 every 等所有常用词，速度极快）"""
         async with aiohttp.ClientSession() as session:
             try:
-                # 使用 Free Dictionary API 进行验证
-                url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word}"
+                # sp=xxx 表示精确拼写匹配，max=1 只需要返回一个最匹配的结果
+                url = f"https://api.datamuse.com/words?sp={word.lower()}&max=1"
                 async with session.get(url) as resp:
-                    # 200 表示在词典中找到了该单词
-                    return resp.status == 200
+                    if resp.status == 200:
+                        data = await resp.json()
+                        # 如果返回的数组不为空，且第一个词和我们查的一模一样，说明单词合法
+                        return len(data) > 0 and data[0]['word'].lower() == word.lower()
+                    return False
             except Exception as e:
                 print(f"网络查词出错: {e}")
-                return True  # 如果网络出问题，为了不卡死游戏，默认放行
+                return True  # 如果网络突然抖动，为了不卡死游戏体验，默认放行
 
     def _evaluate_guess(self, guess: str) -> list:
         """评估猜测单词，返回颜色列表"""

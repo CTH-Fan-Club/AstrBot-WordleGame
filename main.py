@@ -63,16 +63,23 @@ class MyPlugin(Star):
                 # ...
                 fg = await new_wordle.submit(idiom)
                 if fg == 0:
+                    yield event.plain_result("没有这个单词呀")
                     return
                 elif fg == 1:
                     await new_wordle.close_game()
                     user_name = event.get_sender_name()
                     await event.send(event.plain_result(f"🎉 恭喜{user_name}，答案完全正确！"))
+                    message_result = event.make_result()
+                    message_result.chain = [Comp.Image.fromFileSystem("guess0.jpg")] # import astrbot.api.message_components as Comp
+                    await event.send(message_result)
                     controller.stop()    # 停止会话控制器，会立即结束。
                     return
                 elif fg == 2:
                     await new_wordle.close_game()
                     await event.send(event.plain_result("非常遗憾，没有人猜出正确答案>_<"))
+                    message_result = event.make_result()
+                    message_result.chain = [Comp.Image.fromFileSystem("guess0.jpg")] # import astrbot.api.message_components as Comp
+                    await event.send(message_result)
                     controller.stop()    # 停止会话控制器，会立即结束。
                     return
                 

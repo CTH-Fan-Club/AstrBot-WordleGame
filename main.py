@@ -34,15 +34,15 @@ class MyPlugin(Star):
     #    yield event.plain_result(f"开始Wordle, {user_name}, 你发了 {message_str}!") # 发送一条纯文本消息
 
     @filter.command("wordle")
-    async def handle_empty_mention(self, event: AstrMessageEvent):
-        """wordle具体实现"""
+    async def handle_empty_mention(self, event: AstrMessageEvent, length: int = 5):
+        """wordle指令"""
         try:
             new_wordle=WordleGameAsync();
-            await new_wordle.start_game();
-            yield event.plain_result("请发送一个长度为5的英文单词~")
+            await new_wordle.start_game(length);
+            yield event.plain_result(f"请发送一个长度为{length}的英文单词~\n你有10分钟的时间")
 
             # 具体的会话控制器使用方法
-            @session_waiter(timeout=60, record_history_chains=False) # 注册一个会话控制器，设置超时时间为 60 秒，不记录历史消息链
+            @session_waiter(timeout=600, record_history_chains=False) # 注册一个会话控制器，设置超时时间为 60 秒，不记录历史消息链
             async def empty_mention_waiter(controller: SessionController, event: AstrMessageEvent):
                 idiom = event.message_str # 用户发来的成语，假设是 "一马当先"
 
@@ -52,16 +52,24 @@ class MyPlugin(Star):
                     controller.stop()    # 停止会话控制器，会立即结束。
                     return
 
-                if len(idiom) != 5:
+                flag = true
+                for i in idiom:
+                    if (i <'a' or i > 'z'):
+                        flag = false
+
+                if len(idiom) != length or flag == false :
                     return
 
                 # ...
-                await new_wordle.submit(idiom)
+                flag = await new_wordle.submit(idiom)
+                if flag == false:
+                    return
+                
                 message_result = event.make_result()
                 message_result.chain = [Comp.Image.fromFileSystem("guess0.jpg")] # import astrbot.api.message_components as Comp
                 await event.send(message_result) # 发送回复，不能使用 yield
 
-                controller.keep(timeout=60, reset_timeout=True) # 重置超时时间为 60s，如果不重置，则会继续之前的超时时间计时。
+                #controller.keep(timeout=600, reset_timeout=True) # 重置超时时间为 60s，如果不重置，则会继续之前的超时时间计时。
 
                 # controller.stop() # 停止会话控制器，会立即结束。
                 # 如果记录了历史消息链，可以通过 controller.get_history_chains() 获取历史消息链
@@ -69,6 +77,7 @@ class MyPlugin(Star):
             try:
                 await empty_mention_waiter(event)
             except TimeoutError as _: # 当超时后，会话控制器会抛出 TimeoutError
+                await new_wordle.close_game()
                 yield event.plain_result("你超时了！")
             except Exception as e:
                 yield event.plain_result("发生错误，请联系管理员: " + str(e))

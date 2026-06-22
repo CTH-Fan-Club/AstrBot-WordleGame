@@ -29,6 +29,10 @@ class MyPlugin(Star):
             # 注册一个会话控制器，设置超时时间为 10 分钟
             @session_waiter(timeout=600, record_history_chains=False) 
             async def empty_mention_waiter(controller: SessionController, event: AstrMessageEvent):
+                
+                if not event.message_str or not event.message_str.strip():
+                    return # 默默结束，不回复任何消息，不打扰玩家打字
+                
                 # 转换为纯小写并去除两端空格，防止因大小写导致校验失败
                 idiom = event.message_str.strip().lower() 
 

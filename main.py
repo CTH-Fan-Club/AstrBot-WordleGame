@@ -59,7 +59,6 @@ class MyPlugin(Star):
                 if fg == 0:
                     # 【核心修复】改为使用 await event.send 发送，不再使用 yield
                     await event.send(event.plain_result("词典中没有这个单词呀，不算次数，请重新输入~"))
-                    controller.keep(timeout=600, reset_timeout=True) # 单词不存在，继续等待输入
                     return
                     
                 elif fg == 1:
@@ -83,7 +82,10 @@ class MyPlugin(Star):
                     await event.send(message_result)
                     controller.stop()    # 输了，结束游戏
                     return
-                
+                elif fg == 4:
+                    await event.send(event.plain_result("你已经猜过这个单词了"))
+                    return
+
                 # fg == 3: 单词存在但没猜中，发送当前进度的图片
                 message_result = event.make_result()
                 message_result.chain = [Comp.Image.fromFileSystem("guess0.jpg")] 

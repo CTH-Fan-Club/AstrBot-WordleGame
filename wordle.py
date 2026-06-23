@@ -3,6 +3,7 @@ import aiohttp
 import os
 import random
 from PIL import Image, ImageDraw, ImageFont
+from .lexicon import cet_words
 
 class WordleGameAsync:
     def __init__(self):
@@ -21,50 +22,49 @@ class WordleGameAsync:
         self.COLOR_TEXT_WHITE = (255, 255, 255)
 
     async def start_game(self, length: int = 5):
-        """游戏开始，指定单词长度 (2-11)"""
-        # 限制长度在 2 到 11 之间
+        """游戏开始，指定单词长度 (2-11)，从国内离线四六级词库中随机抽词"""
         self.length = max(2, min(11, length))
-        if(length > 5):
-            self.max_attempts = self.max_attempts + length - 5
+        if length > 5:
+            self.max_attempts = 6 + length - 5
+        else:
+            self.max_attempts = 6
         self.guesses = []
         self.is_active = True
 
         print(f"正在启动游戏，目标单词长度为 {self.length}...")
-        
-        # 联网获取一个指定长度的随机目标单词
-        async with aiohttp.ClientSession() as session:
-            try:
-                # 使用免费的随机单词 API
-                url = f"https://random-word-api.herokuapp.com/word?length={self.length}"
-                async with session.get(url) as resp:
-                    if resp.status == 200:
-                        data = await resp.json()
-                        self.target_word = data[0].upper()
-                    else:
-                        # API 异常时的备用方案
-                        self.target_word = "APPLE"[:self.length].ljust(self.length, 'A')
-            except Exception as e:
-                print(f"获取目标单词失败，使用备用单词。错误: {e}")
-                self.target_word = "HELLO"[:self.length].ljust(self.length, 'A')
 
-        print(f"游戏已成功开始！请发送一个长度为 {self.length} 的英文单词。")
-        # print(f"【作弊代码】目标单词是: {self.target_word}") 
+        # ====== 2. 核心修改：直接使用从 lexicon.py 导入的 cet_words ======
+        # 过滤出符合玩家指定长度(self.length)的四六级单词
+        valid_pool = [w.upper() for w in cet_words if len(w) == self.length]
+        # ==============================================================
+
+        # 如果词库里正好有这个长度的词，就随机抽一个；如果没有，就用保底单词
+        if valid_pool:
+            self.target_word = random.choice(valid_pool)
+            print(f"成功从国内四六级词库中抽取单词！同长度候选词还有 {len(valid_pool)} 个。")
+        else:
+            # 极端长度下的兜底方案（全A填充）
+            self.target_word = "APPLE"[:self.length].ljust(self.length, 'A').upper()
+
+        print(f"游戏已成功开始！请发送一个长度为 {self.length} 的四六级英文单词。")
 
     async def _check_word_online(self, word: str) -> bool:
-        """使用 Datamuse API 检查单词是否存在（支持 every 等所有常用词，速度极快）"""
+        """使用国内扇贝词典 API 检查单词是否存在（国内服务器极速响应，极度稳定）"""
         async with aiohttp.ClientSession() as session:
             try:
-                # sp=xxx 表示精确拼写匹配，max=1 只需要返回一个最匹配的结果
-                url = f"https://api.datamuse.com/words?sp={word.lower()}&max=1"
+                # 扇贝的通用查词接口
+                url = f"https://api.shanbay.com/bdc/search/?word={word.lower()}"
                 async with session.get(url) as resp:
                     if resp.status == 200:
                         data = await resp.json()
-                        # 如果返回的数组不为空，且第一个词和我们查的一模一样，说明单词合法
-                        return len(data) > 0 and data[0]['word'].lower() == word.lower()
+                        # msg 为 "SUCCESS" 且 status_code 为 0 说明单词存在于词典中
+                        if data.get("msg") == "SUCCESS" and data.get("status_code") == 0:
+                            # 确保返回了有效数据
+                            return "data" in data and bool(data["data"])
                     return False
             except Exception as e:
-                print(f"网络查词出错: {e}")
-                return True  # 如果网络突然抖动，为了不卡死游戏体验，默认放行
+                print(f"国内扇贝查词出错: {e}")
+                return True  # 降级容错，防止卡死游戏
 
     def _evaluate_guess(self, guess: str) -> list:
         """评估猜测单词，返回颜色列表"""
@@ -162,6 +162,12 @@ class WordleGameAsync:
         if not is_valid:
             print(f"提交失败：词典中不存在单词 '{word}'！")
             return 0
+
+        check_word = self.target_word.upper() # 记得转大写，因为 guesses 里存的都是大写
+
+        if any(word == check_word for word, _ in self.guesses):
+            print("这个单词之前已经猜过啦！")
+            return 4
 
         # 计算颜色判定并保存记录
         colors = self._evaluate_guess(word)

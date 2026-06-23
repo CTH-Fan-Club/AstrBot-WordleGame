@@ -49,22 +49,9 @@ class WordleGameAsync:
         print(f"游戏已成功开始！请发送一个长度为 {self.length} 的四六级英文单词。")
 
     async def _check_word_online(self, word: str) -> bool:
-        """使用国内扇贝词典 API 检查单词是否存在（国内服务器极速响应，极度稳定）"""
-        async with aiohttp.ClientSession() as session:
-            try:
-                # 扇贝的通用查词接口
-                url = f"https://api.shanbay.com/bdc/search/?word={word.lower()}"
-                async with session.get(url) as resp:
-                    if resp.status == 200:
-                        data = await resp.json()
-                        # msg 为 "SUCCESS" 且 status_code 为 0 说明单词存在于词典中
-                        if data.get("msg") == "SUCCESS" and data.get("status_code") == 0:
-                            # 确保返回了有效数据
-                            return "data" in data and bool(data["data"])
-                    return False
-            except Exception as e:
-                print(f"国内扇贝查词出错: {e}")
-                return True  # 降级容错，防止卡死游戏
+        """从本地全量词库中校验单词是否存在"""
+        from .dictionary import is_valid_english_word
+        return is_valid_english_word(word)
 
     def _evaluate_guess(self, guess: str) -> list:
         """评估猜测单词，返回颜色列表"""
